@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/TheDash/">
+    <Project Path="src/TheDash/TheDash.csproj" />
+  </Folder>
+</Solution>
