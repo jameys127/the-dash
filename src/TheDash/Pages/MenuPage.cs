@@ -23,6 +23,10 @@ public class MenuPage : BasePage
             {
                 return PageEnum.EXIT;
             }
+	    else if(menuSelection == 0)
+	    {
+		return PageEnum.SCRIPTS;
+	    }
             return PageEnum.MENU;
         }
         else
@@ -50,12 +54,7 @@ public class MenuPage : BasePage
                 rows.Add(new FigletText(Fonts.fontminiwi, MenuItems[i]).Color(Color.Purple));
             }
         }
-        Panel panel = new Panel(
-			new Rows(
-				new TitleRender("The Dash - Choose a script to run"),
-				Align.Center(new Rows(rows), VerticalAlignment.Middle)
-				)
-			)
+        Panel panel = new Panel(new Rows(Align.Center(new Rows(rows), VerticalAlignment.Middle)))
             .Header("The Dash")
             .BorderColor(Color.Purple)
             .RoundedBorder()

@@ -9,10 +9,12 @@ public class ScriptPage : BasePage
 
     public override Panel ReturnPanel()
     {
-        Panel panel = new Panel("Stuff")
-            .Header("The Dash")
+        Panel panel = new Panel(
+		new Rows(new TitleRender("Scripts - Choose a script to run"))
+	)
             .BorderColor(Color.Purple)
-            .RoundedBorder()
+	    .Padding(0, 0, 0, 0)
+            .NearBorder()
             .Expand();
         return panel;
     }

@@ -12,7 +12,9 @@ public class MainPage
     public MainPage()
     {
         MenuPage menu = new MenuPage();
+	ScriptPage script = new ScriptPage();
         AllPages.Add(PageEnum.MENU, menu);
+	AllPages.Add(PageEnum.SCRIPTS, script);
         RenderedPage = PageEnum.MENU;
         page = AllPages[RenderedPage];
         currentPanel = page.ReturnPanel();
