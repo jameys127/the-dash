@@ -35,7 +35,7 @@ public class MenuPage : BasePage
     {
         var rows = new List<IRenderable>
         {
-            new FigletText(Fonts.font3d, "The Dash").Color(Color.Purple).Smushed(),
+            new FigletText(Fonts.font3d, "The Dash").Color(Color.Purple),
             new Text("")
         };
 
@@ -50,7 +50,12 @@ public class MenuPage : BasePage
                 rows.Add(new FigletText(Fonts.fontminiwi, MenuItems[i]).Color(Color.Purple));
             }
         }
-        Panel panel = new Panel(Align.Center(new Rows(rows), VerticalAlignment.Middle))
+        Panel panel = new Panel(
+			new Rows(
+				new TitleRender("The Dash - Choose a script to run"),
+				Align.Center(new Rows(rows), VerticalAlignment.Middle)
+				)
+			)
             .Header("The Dash")
             .BorderColor(Color.Purple)
             .RoundedBorder()
