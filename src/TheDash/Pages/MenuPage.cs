@@ -55,9 +55,8 @@ public class MenuPage : BasePage
             }
         }
         Panel panel = new Panel(new Rows(Align.Center(new Rows(rows), VerticalAlignment.Middle)))
-            .Header("The Dash")
             .BorderColor(Color.Purple)
-            .RoundedBorder()
+            .NearBorder()
             .Expand();
         return panel;
     }
