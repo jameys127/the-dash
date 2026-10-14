@@ -6,18 +6,18 @@ public class MenuPage : BasePage
     List<string> MenuItems = new List<string> { "Scripts", "Notes", "Game", "Exit"};
     int menuSelection = 0;
 
-    public override PageEnum PageNavigation(ConsoleKey key)
+    public override PageEnum PageNavigation(ConsoleKeyInfo keypress)
     {
-        if(key == ConsoleKey.UpArrow)
+        if(keypress.Key == ConsoleKey.UpArrow)
         {
             menuSelection = menuSelection == 0 ? menuSelection = MenuItems.Count-1 : menuSelection = menuSelection - 1;
             return PageEnum.MENU;
-        }else if(key == ConsoleKey.DownArrow)
+        }else if(keypress.Key == ConsoleKey.DownArrow)
         {
             menuSelection = menuSelection == MenuItems.Count-1 ? menuSelection = 0 : menuSelection = menuSelection + 1;
             return PageEnum.MENU;
         }
-        else if(key == ConsoleKey.Enter)
+        else if(keypress.Key == ConsoleKey.Enter)
         {
             if(menuSelection == MenuItems.Count - 1)
             {

@@ -1,12 +1,12 @@
 using Spectre.Console;
 public class Navigation
 {
-    public static ConsoleKey MenuNavigation()
+    public static ConsoleKeyInfo MenuNavigation()
     {
-        ConsoleKey pressedKey = ConsoleKey.None; 
+        ConsoleKeyInfo pressedKey = new ConsoleKeyInfo();
         if (Console.KeyAvailable)
         {
-            pressedKey = Console.ReadKey(true).Key;
+            pressedKey = Console.ReadKey(true);
         }
         return pressedKey;
     }

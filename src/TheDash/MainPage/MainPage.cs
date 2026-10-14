@@ -32,7 +32,7 @@ public class MainPage
                 {
                     layout.Update(currentPanel);
                     ctx.Refresh();
-                    ConsoleKey keypress = Navigation.MenuNavigation();
+                    ConsoleKeyInfo keypress = Navigation.MenuNavigation();
                     RenderedPage = page.PageNavigation(keypress);
                     if(RenderedPage == PageEnum.EXIT)
                     {
