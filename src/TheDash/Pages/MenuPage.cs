@@ -12,23 +12,31 @@ public class MenuPage : BasePage
         {
             menuSelection = menuSelection == 0 ? menuSelection = MenuItems.Count-1 : menuSelection = menuSelection - 1;
             return PageEnum.MENU;
-        }else if(keypress.Key == ConsoleKey.DownArrow)
+        }
+
+        else if(keypress.Key == ConsoleKey.DownArrow)
         {
             menuSelection = menuSelection == MenuItems.Count-1 ? menuSelection = 0 : menuSelection = menuSelection + 1;
             return PageEnum.MENU;
         }
+
         else if(keypress.Key == ConsoleKey.Enter)
         {
             if(menuSelection == MenuItems.Count - 1)
             {
                 return PageEnum.EXIT;
             }
-	    else if(menuSelection == 0)
-	    {
-		return PageEnum.SCRIPTS;
-	    }
+	        else if(menuSelection == 0)
+	        {
+		    return PageEnum.SCRIPTS;
+	        }
             return PageEnum.MENU;
         }
+        else if(keypress.Key == ConsoleKey.Escape)
+        {
+            return PageEnum.EXIT;
+        }
+
         else
         {
             return PageEnum.MENU;
