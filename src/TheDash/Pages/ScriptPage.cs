@@ -1,3 +1,4 @@
+using System.Runtime.Serialization.Formatters;
 using System.Text;
 using Spectre.Console;
 using Spectre.Console.Rendering;
@@ -15,9 +16,11 @@ public class ScriptPage : BasePage
         {3, "[[ 3 / 3 ]] Enter the [bold italic]description[/] of the script"}
     };
     private StringBuilder input = new StringBuilder();
+    private Markup resultMarkup = new Markup("[green]\u2713 Success:[/] Script added!");
     private string path = "";
     private string name = "";
     private string description = "";
+    private int selection = 1;
 
 
     public ScriptPage(Database db)
@@ -67,7 +70,7 @@ public class ScriptPage : BasePage
                         description = input.ToString();
                         input.Clear();
                         InputBoxStep = 1;
-                        var resultMarkup = AddScript();
+                        resultMarkup = AddScript();
                         AddTextBoxOpen = false;
                         ResultTextBoxOpen = true;
                         break;
@@ -80,7 +83,16 @@ public class ScriptPage : BasePage
 
         if (ResultTextBoxOpen)
         {
-            //TODO Make the success or failure box. Another method.
+            if(keypress.Key == ConsoleKey.Enter)
+            {
+                path = "";
+                name = "";
+                description = "";
+                resultMarkup = new Markup("");
+                ResultTextBoxOpen = false;
+                return PageEnum.SCRIPTS;
+            }
+            return PageEnum.SCRIPTS;
         }
 
 
@@ -112,6 +124,23 @@ public class ScriptPage : BasePage
 
     public Padder SwapPanel()
     {
+
+        var InputLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
+                            new Panel(
+                                Align.Left(new Markup($"[blue]{input.ToString()}[slowblink]|[/][/]"), VerticalAlignment.Middle)
+                            ).Expand().Header($"{InputBoxHeader[InputBoxStep]}").HeaderAlignment(Justify.Center).RoundedBorder().BorderColor(Color.Blue)
+                        );
+
+        var ResultLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
+                            new Panel(
+                                Align.Center(new Rows(
+                                    resultMarkup,
+                                    new Text(""),
+                                    new Markup("[blue]> [/][bold white on blue] OK [/]")
+                                ), VerticalAlignment.Middle)
+                            ).Expand().RoundedBorder().BorderColor(Color.Blue)
+                        );
+
         return new Padder(new Layout("BodyRoot")
             .SplitRows(
                 new Layout("UnusedTop").Ratio(3).Update(new Text("")),
@@ -122,11 +151,7 @@ public class ScriptPage : BasePage
                         new Layout("UnusedLeft").Ratio(1).Update(new Text("")),
                         // ^^ Simply blank space ^^
 
-                        new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
-                            new Panel(
-                                Align.Left(new Markup($"[blue]{input.ToString()}[slowblink]|[/][/]"), VerticalAlignment.Middle)
-                            ).Expand().Header($"{InputBoxHeader[InputBoxStep]}").RoundedBorder().BorderColor(Color.Blue)
-                        ),
+                        AddTextBoxOpen == true ? InputLayout : ResultLayout,
 
                         // vv Simply blank space vv
                         new Layout("UnusedRight").Ratio(1).Update(new Text(""))
@@ -139,14 +164,30 @@ public class ScriptPage : BasePage
 
     public Padder MakeTable()
     {
-        if (AddTextBoxOpen)
+        if (AddTextBoxOpen || ResultTextBoxOpen)
         {
             return SwapPanel();
         }
+        List<Script> scripts = scriptController.GetAllScripts();
         var table = new Table();
         table.AddColumn("[purple]Scripts[/]", col => col.Centered());
+        table.AddColumn("");
         table.AddColumn("[purple]Description[/]", col => col.Centered());
         table.AddEmptyRow();
+        if(scripts.Count == 0)
+        {
+            table.AddEmptyRow();
+            table.AddRow("[purple]0 scripts found![/]", "[purple]|[/]", "[purple]Press [[ [slowblink]+[/] ]] to add a script to the list[/]");
+        }
+        else
+        {
+            foreach(Script script in scripts)
+            {
+                table.AddRow($"[purple]{script.Name}[/]", "[purple]|[/]", $"[purple]{script.Description}[/]");
+                table.AddEmptyRow();
+            }
+        }
+
         var padder = new Padder(
             Align.Center(
                 table.Border(TableBorder.SimpleHeavy)
