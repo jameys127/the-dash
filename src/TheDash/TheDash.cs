@@ -1,10 +1,19 @@
-using System.Linq.Expressions;
-using Spectre.Console;
+using Microsoft.Data.Sqlite;
 
 class Dash{
 	static void Main()
 	{
-		MainPage mainPage = new MainPage();
+
+		var folder = Path.Combine(
+			Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+			"TheDash"
+		);
+		Directory.CreateDirectory(folder);
+		var dbPath = Path.Combine(folder, "thedash.db");
+		Database db = new Database(dbPath);
+		db.TablesIfNotExist();
+
+		MainPage mainPage = new MainPage(db);
 		mainPage.StartDash();
 	}
 }	

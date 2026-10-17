@@ -3,8 +3,13 @@ using Spectre.Console.Rendering;
 
 public class MenuPage : BasePage
 {
-    List<string> MenuItems = new List<string> { "Scripts", "Notes", "Game", "Exit"};
-    int menuSelection = 0;
+    private List<string> MenuItems = new List<string> { "Scripts", "Notes", "Game", "Exit"};
+    private int menuSelection = 0;
+    private Database db;
+    public MenuPage(Database db)
+    {
+        this.db = db;
+    }
 
     public override PageEnum PageNavigation(ConsoleKeyInfo keypress)
     {
@@ -43,7 +48,7 @@ public class MenuPage : BasePage
         }
     }
 
-    public override Panel ReturnPanel()
+    public override IRenderable ReturnRender()
     {
         var rows = new List<IRenderable>
         {
@@ -62,10 +67,7 @@ public class MenuPage : BasePage
                 rows.Add(new FigletText(Fonts.fontminiwi, MenuItems[i]).Color(Color.Purple));
             }
         }
-        Panel panel = new Panel(new Rows(Align.Center(new Rows(rows), VerticalAlignment.Middle)))
-            .BorderColor(Color.Purple)
-            .NearBorder()
-            .Expand();
+        Layout panel = new Layout(new Rows(Align.Center(new Rows(rows), VerticalAlignment.Middle)));
         return panel;
     }
 }

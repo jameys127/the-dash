@@ -3,21 +3,21 @@ using Spectre.Console.Rendering;
 
 public class MainPage
 {
-    bool running = true;
-    Dictionary<PageEnum, BasePage> AllPages = new Dictionary<PageEnum, BasePage>();
-    BasePage page;
-    Panel currentPanel;
-    PageEnum RenderedPage;
+    private bool running = true;
+    private Dictionary<PageEnum, BasePage> AllPages = new Dictionary<PageEnum, BasePage>();
+    private BasePage page;
+    private IRenderable currentRender;
+    private PageEnum RenderedPage;
 
-    public MainPage()
+    public MainPage(Database db)
     {
-        MenuPage menu = new MenuPage();
-	ScriptPage script = new ScriptPage();
+        MenuPage menu = new MenuPage(db);
+	    ScriptPage script = new ScriptPage(db);
         AllPages.Add(PageEnum.MENU, menu);
-	AllPages.Add(PageEnum.SCRIPTS, script);
+	    AllPages.Add(PageEnum.SCRIPTS, script);
         RenderedPage = PageEnum.MENU;
         page = AllPages[RenderedPage];
-        currentPanel = page.ReturnPanel();
+        currentRender = page.ReturnRender();
     }
 
 
@@ -30,7 +30,7 @@ public class MainPage
             {
                 while (running)
                 {
-                    layout.Update(currentPanel);
+                    layout.Update(currentRender);
                     ctx.Refresh();
                     ConsoleKeyInfo keypress = Navigation.MenuNavigation();
                     RenderedPage = page.PageNavigation(keypress);
@@ -40,7 +40,7 @@ public class MainPage
                         continue;
                     }
                     page = AllPages[RenderedPage];
-                    currentPanel = page.ReturnPanel();
+                    currentRender = page.ReturnRender();
                     Thread.Sleep(16);
                 }
             });
