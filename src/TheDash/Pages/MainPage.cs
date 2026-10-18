@@ -25,24 +25,26 @@ public class MainPage
     {
         Layout layout = new Layout("thedash");
 
-        AnsiConsole.Live(layout)
-            .Start(ctx =>
-            {
-                while (running)
+        AnsiConsole.AlternateScreen(() =>{
+            AnsiConsole.Live(layout)
+                .Start(ctx =>
                 {
-                    layout.Update(currentRender);
-                    ctx.Refresh();
-                    ConsoleKeyInfo keypress = Navigation.MenuNavigation();
-                    RenderedPage = page.PageNavigation(keypress);
-                    if(RenderedPage == PageEnum.EXIT)
+                    while (running)
                     {
-                        running = false;
-                        continue;
+                        layout.Update(currentRender);
+                        ctx.Refresh();
+                        ConsoleKeyInfo keypress = Navigation.MenuNavigation();
+                        RenderedPage = page.PageNavigation(keypress);
+                        if(RenderedPage == PageEnum.EXIT)
+                        {
+                            running = false;
+                            continue;
+                        }
+                        page = AllPages[RenderedPage];
+                        currentRender = page.ReturnRender();
+                        Thread.Sleep(16);
                     }
-                    page = AllPages[RenderedPage];
-                    currentRender = page.ReturnRender();
-                    Thread.Sleep(16);
-                }
-            });
+                });
+        });
     }
 }

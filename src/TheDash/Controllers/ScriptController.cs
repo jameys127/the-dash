@@ -23,7 +23,7 @@ public class ScriptController
         }
         catch (SqliteException e)
         {
-            return new Markup($"[red]\u2717 Error:[/] {Markup.Escape(e.Message)}").Overflow(Overflow.Ellipsis);
+            return new Markup($"[red]\u2717 Error. Please try again:[/] {Markup.Escape(e.Message)}").Overflow(Overflow.Ellipsis);
         }
     }
 

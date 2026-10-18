@@ -118,7 +118,7 @@ public class ScriptPage : BasePage
         }
 
 
-        if(keypress.Key == ConsoleKey.Add)
+        if(keypress.KeyChar == '+')
         {
             AddTextBoxOpen = true;       
         }
@@ -158,7 +158,7 @@ public class ScriptPage : BasePage
                                 Align.Center(new Rows(
                                     resultMarkup,
                                     new Text(""),
-                                    new Markup("[blue]> [/][bold white on blue] OK [/]")
+                                    new Markup("[blue]> [/][bold blue] OK [/]")
                                 ), VerticalAlignment.Middle)
                             ).Expand().RoundedBorder().BorderColor(Color.Blue)
                         );

@@ -15,7 +15,7 @@ public sealed class TitleRender : IRenderable
 
 	public IEnumerable<Segment> Render(RenderOptions options, int maxWidth)
 	{
-		Style style = new Style(Color.White, Color.Purple);
+		Style style = new Style(foreground: Color.Purple, decoration: Decoration.Invert);
 		var styling = new Style(style.Background);
 
 		if(options.Capabilities.Unicode){
