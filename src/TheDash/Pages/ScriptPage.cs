@@ -15,12 +15,14 @@ public class ScriptPage : BasePage
         {2, "[[ 2 / 3 ]] Enter the [bold italic]name[/] of the script"},
         {3, "[[ 3 / 3 ]] Enter the [bold italic]description[/] of the script"}
     };
+
+    private List<Script> ListOfScripts = new List<Script>();
     private StringBuilder input = new StringBuilder();
     private Markup resultMarkup = new Markup("[green]\u2713 Success:[/] Script added!");
     private string path = "";
     private string name = "";
     private string description = "";
-    private int selection = 1;
+    private int selection = 0;
 
 
     public ScriptPage(Database db)
@@ -41,6 +43,26 @@ public class ScriptPage : BasePage
         else if(keypress.Key == ConsoleKey.Escape)
         {
             return PageEnum.MENU;
+        }
+
+        if(keypress.Key == ConsoleKey.UpArrow)
+        {
+            if(selection == 0)
+            {
+                selection = ListOfScripts.Count - 1;
+                return PageEnum.SCRIPTS;
+            }
+            selection--;
+            return PageEnum.SCRIPTS;
+        }
+        else if(keypress.Key == ConsoleKey.DownArrow)
+        {
+            if(selection == ListOfScripts.Count - 1)
+            {
+                selection = 0;
+                return PageEnum.SCRIPTS;
+            }
+            selection++;
         }
 
         if (AddTextBoxOpen)
@@ -168,22 +190,28 @@ public class ScriptPage : BasePage
         {
             return SwapPanel();
         }
-        List<Script> scripts = scriptController.GetAllScripts();
+        ListOfScripts = scriptController.GetAllScripts();
         var table = new Table();
         table.AddColumn("[purple]Scripts[/]", col => col.Centered());
         table.AddColumn("");
         table.AddColumn("[purple]Description[/]", col => col.Centered());
         table.AddEmptyRow();
-        if(scripts.Count == 0)
+        if(ListOfScripts.Count == 0)
         {
             table.AddEmptyRow();
             table.AddRow("[purple]0 scripts found![/]", "[purple]|[/]", "[purple]Press [[ [slowblink]+[/] ]] to add a script to the list[/]");
         }
         else
         {
-            foreach(Script script in scripts)
+            for(int i = 0; i < ListOfScripts.Count; i++)
             {
-                table.AddRow($"[purple]{script.Name}[/]", "[purple]|[/]", $"[purple]{script.Description}[/]");
+                if(selection == i)
+                {
+                    table.AddRow($"[blue]>[/] [blue]{ListOfScripts[i].Name}[/]", "[blue]|[/]", $"[blue]{ListOfScripts[i].Description}[/]");
+                    table.AddEmptyRow();
+                    continue;
+                }
+                table.AddRow($"  [purple]{ListOfScripts[i].Name}[/]", "[purple]|[/]", $"[purple]{ListOfScripts[i].Description}[/]");
                 table.AddEmptyRow();
             }
         }
