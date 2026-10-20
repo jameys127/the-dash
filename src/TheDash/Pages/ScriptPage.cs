@@ -1,7 +1,7 @@
-using System.Runtime.Serialization.Formatters;
 using System.Text;
 using Spectre.Console;
 using Spectre.Console.Rendering;
+using System.Diagnostics;
 
 public class ScriptPage : BasePage
 {
@@ -9,6 +9,7 @@ public class ScriptPage : BasePage
     private ScriptController scriptController;
     private bool AddTextBoxOpen = false;
     private bool ResultTextBoxOpen = false;
+    private bool ConfirmationBoxOpen = false;
     private int InputBoxStep = 1;
     private Dictionary<int, string> InputBoxHeader = new Dictionary<int, string> {
         {1, "[[ 1 / 3 ]] Enter the [bold italic]path[/] to the script"},
@@ -23,6 +24,7 @@ public class ScriptPage : BasePage
     private string name = "";
     private string description = "";
     private int selection = 0;
+    private bool confirm = false;
 
 
     public ScriptPage(Database db)
@@ -47,6 +49,10 @@ public class ScriptPage : BasePage
 
         if(keypress.Key == ConsoleKey.UpArrow)
         {
+            if(ListOfScripts.Count == 0)
+            {
+                return PageEnum.SCRIPTS;
+            }
             if(selection == 0)
             {
                 selection = ListOfScripts.Count - 1;
@@ -57,12 +63,17 @@ public class ScriptPage : BasePage
         }
         else if(keypress.Key == ConsoleKey.DownArrow)
         {
+            if(ListOfScripts.Count == 0)
+            {
+                return PageEnum.SCRIPTS;
+            }
             if(selection == ListOfScripts.Count - 1)
             {
                 selection = 0;
                 return PageEnum.SCRIPTS;
             }
             selection++;
+            return PageEnum.SCRIPTS;
         }
 
         if (AddTextBoxOpen)
@@ -111,8 +122,32 @@ public class ScriptPage : BasePage
                 name = "";
                 description = "";
                 resultMarkup = new Markup("");
+                selection = 0;
                 ResultTextBoxOpen = false;
                 return PageEnum.SCRIPTS;
+            }
+            return PageEnum.SCRIPTS;
+        }
+
+        if (ConfirmationBoxOpen)
+        {
+            if(keypress.Key == ConsoleKey.LeftArrow || keypress.Key == ConsoleKey.RightArrow)
+            {
+                confirm = !confirm;
+            }
+            if(keypress.Key == ConsoleKey.Enter)
+            {
+                if(confirm){
+                    resultMarkup = RemoveScript(ListOfScripts[selection].Id);
+                    ConfirmationBoxOpen = false;
+                    ResultTextBoxOpen = true;
+                    selection = 0;
+                    confirm = false;
+                }
+                else
+                {
+                    ConfirmationBoxOpen = false;
+                }
             }
             return PageEnum.SCRIPTS;
         }
@@ -122,6 +157,12 @@ public class ScriptPage : BasePage
         {
             AddTextBoxOpen = true;       
         }
+
+        if(keypress.Key == ConsoleKey.Delete && ListOfScripts.Count > 0)
+        {
+            ConfirmationBoxOpen = true;
+
+        }
         return PageEnum.SCRIPTS;
     }
 
@@ -129,64 +170,19 @@ public class ScriptPage : BasePage
 
     public override IRenderable ReturnRender()
     {
-        // Panel panel = new Panel(
-            Layout panel = new Layout("root").SplitRows(
-                new Layout("Title", new TitleRender("Scripts - Choose a script")).Size(1),
-                new Layout("Body", MakeTable()),
-                new Layout("Footer", new TitleRender("Press [ ESC ] to go back | Press [ + ] to add a script")).Size(1)
-            );
-        // ).BorderColor(Color.Purple)
-        // .Padding(0,0,0,0)
-        // .NearBorder()
-        // .Expand();
-
+        Layout panel = new Layout("root").SplitRows(
+            new Layout("Title", new TitleRender("Scripts - Choose a script")).Size(1),
+            new Layout("Body", MakeTable()),
+            new Layout("Footer", new TitleRender("Press [ ESC ] to go back | Press [ + ] to add a script")).Size(1)
+        );
         return panel;
     }
 
 
-    public Padder SwapPanel()
-    {
-
-        var InputLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
-                            new Panel(
-                                Align.Left(new Markup($"[blue]{input.ToString()}[slowblink]|[/][/]"), VerticalAlignment.Middle)
-                            ).Expand().Header($"{InputBoxHeader[InputBoxStep]}").HeaderAlignment(Justify.Center).RoundedBorder().BorderColor(Color.Blue)
-                        );
-
-        var ResultLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
-                            new Panel(
-                                Align.Center(new Rows(
-                                    resultMarkup,
-                                    new Text(""),
-                                    new Markup("[blue]> [/][bold blue] OK [/]")
-                                ), VerticalAlignment.Middle)
-                            ).Expand().RoundedBorder().BorderColor(Color.Blue)
-                        );
-
-        return new Padder(new Layout("BodyRoot")
-            .SplitRows(
-                new Layout("UnusedTop").Ratio(3).Update(new Text("")),
-                // ^^ Simply blank space ^^
-
-                new Layout("MiddleRow").Size(5)
-                    .SplitColumns(
-                        new Layout("UnusedLeft").Ratio(1).Update(new Text("")),
-                        // ^^ Simply blank space ^^
-
-                        AddTextBoxOpen == true ? InputLayout : ResultLayout,
-
-                        // vv Simply blank space vv
-                        new Layout("UnusedRight").Ratio(1).Update(new Text(""))
-                    ),
-
-                // vv Simply blank space vv
-                new Layout("UnusedBottom").Ratio(3).Update(new Text(""))
-            ), new Padding(0,0,0,0));
-    }
 
     public Padder MakeTable()
     {
-        if (AddTextBoxOpen || ResultTextBoxOpen)
+        if (AddTextBoxOpen || ResultTextBoxOpen || ConfirmationBoxOpen)
         {
             return SwapPanel();
         }
@@ -226,9 +222,79 @@ public class ScriptPage : BasePage
         return padder;
     }
 
+
+    public Padder SwapPanel()
+    {
+        var middle = new Layout();
+        var answer = confirm ? "> [bold]Yes[/]        No" : "  Yes      > [bold]No[/]";
+
+        var inputLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
+                            new Panel(
+                                Align.Left(new Markup($"[blue]{input.ToString()}[slowblink]|[/][/]"), VerticalAlignment.Middle)
+                            ).Expand().Header($"{InputBoxHeader[InputBoxStep]}").HeaderAlignment(Justify.Center).RoundedBorder().BorderColor(Color.Blue)
+                        );
+
+        var resultLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
+                            new Panel(
+                                Align.Center(new Rows(
+                                    resultMarkup,
+                                    new Text(""),
+                                    new Markup("[blue]> [/][bold blue] OK [/]")
+                                ), VerticalAlignment.Middle)
+                            ).Expand().RoundedBorder().BorderColor(Color.Blue)
+                        );
+        var confirmationLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
+                            new Panel(
+                                Align.Center(new Rows(
+                                    new Markup($"[yellow]\u26a0[/] Are you sure you want to delete this script?"),
+                                    new Text (""),
+                                    new Markup(answer)
+                                ), VerticalAlignment.Middle)
+                            ).Expand().RoundedBorder().BorderColor(Color.Blue)
+                        );
+
+        if (AddTextBoxOpen)
+        {
+            middle = inputLayout;
+        }else if (ResultTextBoxOpen)
+        {
+            middle = resultLayout;
+        }else if (ConfirmationBoxOpen)
+        {
+            middle = confirmationLayout;
+        }
+
+        return new Padder(new Layout("BodyRoot")
+            .SplitRows(
+                new Layout("UnusedTop").Ratio(3).Update(new Text("")),
+                // ^^ Simply blank space ^^
+
+                new Layout("MiddleRow").Size(5)
+                    .SplitColumns(
+                        new Layout("UnusedLeft").Ratio(1).Update(new Text("")),
+                        // ^^ Simply blank space ^^
+
+                        middle,
+
+                        // vv Simply blank space vv
+                        new Layout("UnusedRight").Ratio(1).Update(new Text(""))
+                    ),
+
+                // vv Simply blank space vv
+                new Layout("UnusedBottom").Ratio(3).Update(new Text(""))
+            ), new Padding(0,0,0,0));
+    }
+
+
     private Markup AddScript()
     {
         var resultMessage = scriptController.CreateScript(path, name, description);
         return resultMessage;
+    }
+
+    private Markup RemoveScript(int i)
+    {
+        var result = scriptController.DeleteScript(i);
+        return result;
     }
 }

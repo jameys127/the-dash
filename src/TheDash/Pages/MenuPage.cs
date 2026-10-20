@@ -64,7 +64,7 @@ public class MenuPage : BasePage
             }
             else
             {
-                rows.Add(new FigletText(Fonts.fontminiwi, MenuItems[i]).Color(Color.Purple));
+                rows.Add(new FigletText(Fonts.fontminiwi, "  " + MenuItems[i]).Color(Color.Purple));
             }
         }
         Layout panel = new Layout(new Rows(Align.Center(new Rows(rows), VerticalAlignment.Middle)));
