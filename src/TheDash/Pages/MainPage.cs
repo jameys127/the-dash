@@ -8,6 +8,7 @@ public class MainPage
     private BasePage page;
     private IRenderable currentRender;
     private PageEnum RenderedPage;
+    private bool RedrawNeeded = true;
 
     public MainPage(Database db)
     {
@@ -29,20 +30,24 @@ public class MainPage
             AnsiConsole.Live(layout)
                 .Start(ctx =>
                 {
+                    layout.Update(currentRender);
+                    ctx.Refresh();
                     while (running)
                     {
-                        layout.Update(currentRender);
-                        ctx.Refresh();
                         ConsoleKeyInfo keypress = Navigation.MenuNavigation();
                         RenderedPage = page.PageNavigation(keypress);
-                        if(RenderedPage == PageEnum.EXIT)
+                        if (page.UpdateNeeded())
                         {
-                            running = false;
-                            continue;
+                            if(RenderedPage == PageEnum.EXIT)
+                            {
+                                running = false;
+                                continue;
+                            }
+                            page = AllPages[RenderedPage];
+                            currentRender = page.ReturnRender();
+                            layout.Update(currentRender);
+                            ctx.Refresh();
                         }
-                        page = AllPages[RenderedPage];
-                        currentRender = page.ReturnRender();
-                        Thread.Sleep(16);
                     }
                 });
         });

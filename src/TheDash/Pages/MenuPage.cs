@@ -3,6 +3,7 @@ using Spectre.Console.Rendering;
 
 public class MenuPage : BasePage
 {
+    
     private List<string> MenuItems = new List<string> { "Scripts", "Notes", "Game", "Exit"};
     private int menuSelection = 0;
     private Database db;
@@ -16,12 +17,14 @@ public class MenuPage : BasePage
         if(keypress.Key == ConsoleKey.UpArrow)
         {
             menuSelection = menuSelection == 0 ? menuSelection = MenuItems.Count-1 : menuSelection = menuSelection - 1;
+            StateHasChanged = true;
             return PageEnum.MENU;
         }
 
         else if(keypress.Key == ConsoleKey.DownArrow)
         {
             menuSelection = menuSelection == MenuItems.Count-1 ? menuSelection = 0 : menuSelection = menuSelection + 1;
+            StateHasChanged = true;
             return PageEnum.MENU;
         }
 
@@ -29,21 +32,25 @@ public class MenuPage : BasePage
         {
             if(menuSelection == MenuItems.Count - 1)
             {
+                StateHasChanged = true;
                 return PageEnum.EXIT;
             }
 	        else if(menuSelection == 0)
 	        {
-		    return PageEnum.SCRIPTS;
+                StateHasChanged = true;
+		        return PageEnum.SCRIPTS;
 	        }
+            StateHasChanged = false;
             return PageEnum.MENU;
         }
         else if(keypress.Key == ConsoleKey.Escape)
         {
+            StateHasChanged = true;
             return PageEnum.EXIT;
         }
-
         else
         {
+            StateHasChanged = false;
             return PageEnum.MENU;
         }
     }
@@ -69,5 +76,10 @@ public class MenuPage : BasePage
         }
         Layout panel = new Layout(new Rows(Align.Center(new Rows(rows), VerticalAlignment.Middle)));
         return panel;
+    }
+
+    public override bool UpdateNeeded()
+    {
+        return StateHasChanged;
     }
 }

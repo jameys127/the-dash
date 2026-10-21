@@ -5,26 +5,42 @@ using System.Diagnostics;
 
 public class ScriptPage : BasePage
 {
+    // *** Database instance variables ***
     private Database db;
     private ScriptController scriptController;
+
+
+    // *** Prompt boxes that popup booleans ***
     private bool AddTextBoxOpen = false;
     private bool ResultTextBoxOpen = false;
     private bool ConfirmationBoxOpen = false;
-    private int InputBoxStep = 1;
+    private bool UpdateTextBoxOpen = false;
+
+
+    // *** For prompt box input and design ***
+    private int InputBoxStep = 1; //Input step during the creation of a new script
+    private bool confirm = false; //Selction of the confirmation prompt
+    private StringBuilder input = new StringBuilder();
     private Dictionary<int, string> InputBoxHeader = new Dictionary<int, string> {
         {1, "[[ 1 / 3 ]] Enter the [bold italic]path[/] to the script"},
         {2, "[[ 2 / 3 ]] Enter the [bold italic]name[/] of the script"},
         {3, "[[ 3 / 3 ]] Enter the [bold italic]description[/] of the script"}
     };
-
-    private List<Script> ListOfScripts = new List<Script>();
-    private StringBuilder input = new StringBuilder();
     private Markup resultMarkup = new Markup("[green]\u2713 Success:[/] Script added!");
+
+
+    // *** The list of scripts ***
+    private List<Script> ListOfScripts = new List<Script>();
+
+
+    // *** Temp variables for creating a new script ***
     private string path = "";
     private string name = "";
     private string description = "";
+
+
+    // *** Menu navigation ***
     private int selection = 0;
-    private bool confirm = false;
 
 
     public ScriptPage(Database db)
@@ -36,14 +52,17 @@ public class ScriptPage : BasePage
 
     public override PageEnum PageNavigation(ConsoleKeyInfo keypress)
     {
-        if(keypress.Key == ConsoleKey.Escape && AddTextBoxOpen)
+        if(keypress.Key == ConsoleKey.Escape && (AddTextBoxOpen || UpdateTextBoxOpen))
         {
+            StateHasChanged = true;
             AddTextBoxOpen = false;
+            UpdateTextBoxOpen = false;
             input.Clear();
             return PageEnum.SCRIPTS;
         }
         else if(keypress.Key == ConsoleKey.Escape)
         {
+            StateHasChanged = true;
             return PageEnum.MENU;
         }
 
@@ -51,66 +70,86 @@ public class ScriptPage : BasePage
         {
             if(ListOfScripts.Count == 0)
             {
+                StateHasChanged = false;
                 return PageEnum.SCRIPTS;
             }
             if(selection == 0)
             {
+                StateHasChanged = true;
                 selection = ListOfScripts.Count - 1;
                 return PageEnum.SCRIPTS;
             }
-            selection--;
-            return PageEnum.SCRIPTS;
+            else
+            {
+                StateHasChanged = true;
+                selection--;
+                return PageEnum.SCRIPTS;
+            }
         }
         else if(keypress.Key == ConsoleKey.DownArrow)
         {
             if(ListOfScripts.Count == 0)
             {
+                StateHasChanged = false;
                 return PageEnum.SCRIPTS;
             }
             if(selection == ListOfScripts.Count - 1)
             {
+                StateHasChanged = true;
                 selection = 0;
                 return PageEnum.SCRIPTS;
             }
-            selection++;
-            return PageEnum.SCRIPTS;
+            else
+            {
+                StateHasChanged = true;
+                selection++;
+                return PageEnum.SCRIPTS;
+            }
         }
 
         if (AddTextBoxOpen)
         {
             if (!char.IsControl(keypress.KeyChar))
             {
+                StateHasChanged = true;
                 input.Append(keypress.KeyChar);
+                return PageEnum.SCRIPTS;
             }else if(input.Length != 0 && keypress.Key == ConsoleKey.Backspace)
             {
+                StateHasChanged = true;
                 input.Remove(input.Length - 1, 1);
+                return PageEnum.SCRIPTS;
             }
             else if(input.Length != 0 && keypress.Key == ConsoleKey.Enter)
             {
                 switch (InputBoxStep)
                 {
                     case 1:
+                        StateHasChanged = true;
                         path = input.ToString();
                         input.Clear();
                         InputBoxStep++;
-                        break;
+                        return PageEnum.SCRIPTS;
                     case 2:
+                        StateHasChanged = true;
                         name = input.ToString();
                         input.Clear();
                         InputBoxStep++;
-                        break;
+                        return PageEnum.SCRIPTS;
                     case 3:
+                        StateHasChanged = true;
                         description = input.ToString();
                         input.Clear();
                         InputBoxStep = 1;
                         resultMarkup = AddScript();
                         AddTextBoxOpen = false;
                         ResultTextBoxOpen = true;
-                        break;
+                        return PageEnum.SCRIPTS;
                     default:
                         throw new Exception("Not possible to get here");
                 }
             }
+            StateHasChanged = false;
             return PageEnum.SCRIPTS;
         }
 
@@ -118,6 +157,7 @@ public class ScriptPage : BasePage
         {
             if(keypress.Key == ConsoleKey.Enter)
             {
+                StateHasChanged = true;
                 path = "";
                 name = "";
                 description = "";
@@ -126,6 +166,7 @@ public class ScriptPage : BasePage
                 ResultTextBoxOpen = false;
                 return PageEnum.SCRIPTS;
             }
+            StateHasChanged = false;
             return PageEnum.SCRIPTS;
         }
 
@@ -133,36 +174,101 @@ public class ScriptPage : BasePage
         {
             if(keypress.Key == ConsoleKey.LeftArrow || keypress.Key == ConsoleKey.RightArrow)
             {
+                StateHasChanged = true;
                 confirm = !confirm;
+                return PageEnum.SCRIPTS;
             }
             if(keypress.Key == ConsoleKey.Enter)
             {
                 if(confirm){
+                    StateHasChanged = true;
                     resultMarkup = RemoveScript(ListOfScripts[selection].Id);
                     ConfirmationBoxOpen = false;
                     ResultTextBoxOpen = true;
                     selection = 0;
                     confirm = false;
+                    return PageEnum.SCRIPTS;
                 }
                 else
                 {
+                    StateHasChanged = true;
                     ConfirmationBoxOpen = false;
+                    return PageEnum.SCRIPTS;
                 }
             }
+            StateHasChanged = false;
             return PageEnum.SCRIPTS;
+        }
+
+
+        if (UpdateTextBoxOpen)
+        {
+            if (!char.IsControl(keypress.KeyChar))
+            {
+                StateHasChanged = true;
+                input.Append(keypress.KeyChar);
+                return PageEnum.SCRIPTS;
+            }else if(input.Length != 0 && keypress.Key == ConsoleKey.Backspace)
+            {
+                StateHasChanged = true;
+                input.Remove(input.Length - 1, 1);
+                return PageEnum.SCRIPTS;
+            }
+            else if(input.Length != 0 && keypress.Key == ConsoleKey.Enter)
+            {
+                switch (InputBoxStep)
+                {
+                    case 1:
+                        StateHasChanged = true;
+                        path = input.ToString();
+                        input.Clear();
+                        input.Append(ListOfScripts[selection].Name);
+                        InputBoxStep++;
+                        return PageEnum.SCRIPTS;
+                    case 2:
+                        StateHasChanged = true;
+                        name = input.ToString();
+                        input.Clear();
+                        input.Append(ListOfScripts[selection].Description);
+                        InputBoxStep++;
+                        return PageEnum.SCRIPTS;
+                    case 3:
+                        StateHasChanged = true;
+                        description = input.ToString();
+                        input.Clear();
+                        InputBoxStep = 1;
+                        resultMarkup = UpdateScript(ListOfScripts[selection].Id);
+                        UpdateTextBoxOpen = false;
+                        ResultTextBoxOpen = true;
+                        return PageEnum.SCRIPTS;
+                    default:
+                        throw new Exception("Not possible to get here");
+                }
+            }
         }
 
 
         if(keypress.KeyChar == '+')
         {
-            AddTextBoxOpen = true;       
+            StateHasChanged = true;
+            AddTextBoxOpen = true;
+            return PageEnum.SCRIPTS;
+        }
+        if(keypress.KeyChar == 'U' && ListOfScripts.Count > 0)
+        {
+            input.Append(ListOfScripts[selection].ScriptPath);
+            StateHasChanged = true;
+            UpdateTextBoxOpen = true;
+            return PageEnum.SCRIPTS;
         }
 
         if(keypress.Key == ConsoleKey.Delete && ListOfScripts.Count > 0)
         {
+            StateHasChanged = true;
             ConfirmationBoxOpen = true;
-
+            return PageEnum.SCRIPTS;
         }
+        StateHasChanged = false;
         return PageEnum.SCRIPTS;
     }
 
@@ -182,7 +288,7 @@ public class ScriptPage : BasePage
 
     public Padder MakeTable()
     {
-        if (AddTextBoxOpen || ResultTextBoxOpen || ConfirmationBoxOpen)
+        if (AddTextBoxOpen || ResultTextBoxOpen || ConfirmationBoxOpen || UpdateTextBoxOpen)
         {
             return SwapPanel();
         }
@@ -253,7 +359,7 @@ public class ScriptPage : BasePage
                             ).Expand().RoundedBorder().BorderColor(Color.Blue)
                         );
 
-        if (AddTextBoxOpen)
+        if (AddTextBoxOpen || UpdateTextBoxOpen)
         {
             middle = inputLayout;
         }else if (ResultTextBoxOpen)
@@ -296,5 +402,16 @@ public class ScriptPage : BasePage
     {
         var result = scriptController.DeleteScript(i);
         return result;
+    }
+
+    private Markup UpdateScript(int i)
+    {
+        var result = scriptController.UpdateScript(i, name, description, path);
+        return result;
+    }
+
+    public override bool UpdateNeeded()
+    {
+        return StateHasChanged;
     }
 }
