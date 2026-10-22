@@ -8,6 +8,7 @@ public class ScriptPage : BasePage
     // *** Database instance variables ***
     private Database db;
     private ScriptController scriptController;
+    private ScriptRunner scriptRunner;
 
 
     // *** Prompt boxes that popup booleans ***
@@ -15,6 +16,7 @@ public class ScriptPage : BasePage
     private bool ResultTextBoxOpen = false;
     private bool ConfirmationBoxOpen = false;
     private bool UpdateTextBoxOpen = false;
+    private bool RunningScriptBoxOpen = false;
 
 
     // *** For prompt box input and design ***
@@ -41,12 +43,14 @@ public class ScriptPage : BasePage
 
     // *** Menu navigation ***
     private int selection = 0;
+    private int animation = 0;
 
 
     public ScriptPage(Database db)
     {
         this.db = db;
         scriptController = new ScriptController(db);
+        scriptRunner = new ScriptRunner();
     }
 
 
@@ -155,6 +159,18 @@ public class ScriptPage : BasePage
 
         if (ResultTextBoxOpen)
         {
+            if (scriptRunner.IsScriptRunning())
+            {
+                StateHasChanged = true;
+                return PageEnum.SCRIPTS;
+            }
+            if (RunningScriptBoxOpen)
+            {
+                resultMarkup = ScriptResult();
+                StateHasChanged = true;
+                RunningScriptBoxOpen = false;
+                return PageEnum.SCRIPTS;
+            }
             if(keypress.Key == ConsoleKey.Enter)
             {
                 StateHasChanged = true;
@@ -245,6 +261,8 @@ public class ScriptPage : BasePage
                         throw new Exception("Not possible to get here");
                 }
             }
+            StateHasChanged = false;
+            return PageEnum.SCRIPTS;
         }
 
 
@@ -259,6 +277,15 @@ public class ScriptPage : BasePage
             input.Append(ListOfScripts[selection].ScriptPath);
             StateHasChanged = true;
             UpdateTextBoxOpen = true;
+            return PageEnum.SCRIPTS;
+        }
+
+        if(keypress.Key == ConsoleKey.Enter && ListOfScripts.Count > 0)
+        {
+            StateHasChanged = true;
+            resultMarkup = RunScript();
+            RunningScriptBoxOpen = true;
+            ResultTextBoxOpen = true;
             return PageEnum.SCRIPTS;
         }
 
@@ -358,6 +385,15 @@ public class ScriptPage : BasePage
                                 ), VerticalAlignment.Middle)
                             ).Expand().RoundedBorder().BorderColor(Color.Blue)
                         );
+        var runningScriptLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
+                            new Panel(
+                                Align.Center(new Rows(
+                                    new Text(""),
+                                    new Markup("[bold blue]Script is running.. [/]"),
+                                    new Text("")
+                                ), VerticalAlignment.Middle)
+                            ).Expand().RoundedBorder().BorderColor(Color.Blue)
+                        );
 
         if (AddTextBoxOpen || UpdateTextBoxOpen)
         {
@@ -368,6 +404,9 @@ public class ScriptPage : BasePage
         }else if (ConfirmationBoxOpen)
         {
             middle = confirmationLayout;
+        }else if (RunningScriptBoxOpen)
+        {
+            middle = runningScriptLayout;
         }
 
         return new Padder(new Layout("BodyRoot")
@@ -408,6 +447,22 @@ public class ScriptPage : BasePage
     {
         var result = scriptController.UpdateScript(i, name, description, path);
         return result;
+    }
+
+    private Markup RunScript()
+    {
+        scriptRunner = new ScriptRunner();
+        bool started = scriptRunner.Start(ListOfScripts[selection]);
+        if(started == false)
+        {
+            return new Markup("[red]\u2717 Error:[/] Script failed to start!");
+        }
+        
+        return new Markup ("[bold blue]Script is running...[/]");
+    }
+    private Markup ScriptResult()
+    {
+        return scriptRunner.Result();
     }
 
     public override bool UpdateNeeded()

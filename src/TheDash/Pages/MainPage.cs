@@ -6,9 +6,10 @@ public class MainPage
     private bool running = true;
     private Dictionary<PageEnum, BasePage> AllPages = new Dictionary<PageEnum, BasePage>();
     private BasePage page;
+    private int lastWidth = Console.WindowWidth;
+    private int lastHeight = Console.WindowHeight;
     private IRenderable currentRender;
     private PageEnum RenderedPage;
-    private bool RedrawNeeded = true;
 
     public MainPage(Database db)
     {
@@ -36,8 +37,10 @@ public class MainPage
                     {
                         ConsoleKeyInfo keypress = Navigation.MenuNavigation();
                         RenderedPage = page.PageNavigation(keypress);
-                        if (page.UpdateNeeded())
+                        if (page.UpdateNeeded() || (lastHeight != Console.WindowHeight || lastWidth != Console.WindowWidth))
                         {
+                            lastHeight = Console.WindowHeight;
+                            lastWidth = Console.WindowWidth;
                             if(RenderedPage == PageEnum.EXIT)
                             {
                                 running = false;
@@ -48,6 +51,7 @@ public class MainPage
                             layout.Update(currentRender);
                             ctx.Refresh();
                         }
+                        Thread.Sleep(16);
                     }
                 });
         });
