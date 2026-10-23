@@ -1,7 +1,6 @@
 using System.Text;
 using Spectre.Console;
 using Spectre.Console.Rendering;
-using System.Diagnostics;
 
 public class ScriptPage : BasePage
 {
@@ -9,18 +8,12 @@ public class ScriptPage : BasePage
     private Database db;
     private ScriptController scriptController;
     private ScriptRunner scriptRunner;
-
+    private NewListItem NewScript;
 
     // *** Prompt boxes that popup booleans ***
-    private bool AddTextBoxOpen = false;
-    private bool ResultTextBoxOpen = false;
-    private bool ConfirmationBoxOpen = false;
-    private bool UpdateTextBoxOpen = false;
-    private bool RunningScriptBoxOpen = false;
-
+    private PageMode CurrentPageMode = PageMode.LIST;
 
     // *** For prompt box input and design ***
-    private int InputBoxStep = 1; //Input step during the creation of a new script
     private bool confirm = false; //Selction of the confirmation prompt
     private StringBuilder input = new StringBuilder();
     private Dictionary<int, string> InputBoxHeader = new Dictionary<int, string> {
@@ -35,15 +28,8 @@ public class ScriptPage : BasePage
     private List<Script> ListOfScripts = new List<Script>();
 
 
-    // *** Temp variables for creating a new script ***
-    private string path = "";
-    private string name = "";
-    private string description = "";
-
-
     // *** Menu navigation ***
     private int selection = 0;
-    private int animation = 0;
 
 
     public ScriptPage(Database db)
@@ -51,249 +37,25 @@ public class ScriptPage : BasePage
         this.db = db;
         scriptController = new ScriptController(db);
         scriptRunner = new ScriptRunner();
+        NewScript = new NewListItem(db, scriptController);
     }
 
 
     public override PageEnum PageNavigation(ConsoleKeyInfo keypress)
     {
-        if(keypress.Key == ConsoleKey.Escape && (AddTextBoxOpen || UpdateTextBoxOpen))
-        {
-            StateHasChanged = true;
-            AddTextBoxOpen = false;
-            UpdateTextBoxOpen = false;
-            input.Clear();
-            return PageEnum.SCRIPTS;
-        }
-        else if(keypress.Key == ConsoleKey.Escape)
-        {
-            StateHasChanged = true;
-            return PageEnum.MENU;
-        }
-
-        if(keypress.Key == ConsoleKey.UpArrow)
-        {
-            if(ListOfScripts.Count == 0)
-            {
-                StateHasChanged = false;
-                return PageEnum.SCRIPTS;
-            }
-            if(selection == 0)
-            {
-                StateHasChanged = true;
-                selection = ListOfScripts.Count - 1;
-                return PageEnum.SCRIPTS;
-            }
-            else
-            {
-                StateHasChanged = true;
-                selection--;
-                return PageEnum.SCRIPTS;
-            }
-        }
-        else if(keypress.Key == ConsoleKey.DownArrow)
-        {
-            if(ListOfScripts.Count == 0)
-            {
-                StateHasChanged = false;
-                return PageEnum.SCRIPTS;
-            }
-            if(selection == ListOfScripts.Count - 1)
-            {
-                StateHasChanged = true;
-                selection = 0;
-                return PageEnum.SCRIPTS;
-            }
-            else
-            {
-                StateHasChanged = true;
-                selection++;
-                return PageEnum.SCRIPTS;
-            }
-        }
-
-        if (AddTextBoxOpen)
-        {
-            if (!char.IsControl(keypress.KeyChar))
-            {
-                StateHasChanged = true;
-                input.Append(keypress.KeyChar);
-                return PageEnum.SCRIPTS;
-            }else if(input.Length != 0 && keypress.Key == ConsoleKey.Backspace)
-            {
-                StateHasChanged = true;
-                input.Remove(input.Length - 1, 1);
-                return PageEnum.SCRIPTS;
-            }
-            else if(input.Length != 0 && keypress.Key == ConsoleKey.Enter)
-            {
-                switch (InputBoxStep)
-                {
-                    case 1:
-                        StateHasChanged = true;
-                        path = input.ToString();
-                        input.Clear();
-                        InputBoxStep++;
-                        return PageEnum.SCRIPTS;
-                    case 2:
-                        StateHasChanged = true;
-                        name = input.ToString();
-                        input.Clear();
-                        InputBoxStep++;
-                        return PageEnum.SCRIPTS;
-                    case 3:
-                        StateHasChanged = true;
-                        description = input.ToString();
-                        input.Clear();
-                        InputBoxStep = 1;
-                        resultMarkup = AddScript();
-                        AddTextBoxOpen = false;
-                        ResultTextBoxOpen = true;
-                        return PageEnum.SCRIPTS;
-                    default:
-                        throw new Exception("Not possible to get here");
-                }
-            }
-            StateHasChanged = false;
-            return PageEnum.SCRIPTS;
-        }
-
-        if (ResultTextBoxOpen)
-        {
-            if (scriptRunner.IsScriptRunning())
-            {
-                StateHasChanged = true;
-                return PageEnum.SCRIPTS;
-            }
-            if (RunningScriptBoxOpen)
-            {
-                resultMarkup = ScriptResult();
-                StateHasChanged = true;
-                RunningScriptBoxOpen = false;
-                return PageEnum.SCRIPTS;
-            }
-            if(keypress.Key == ConsoleKey.Enter)
-            {
-                StateHasChanged = true;
-                path = "";
-                name = "";
-                description = "";
-                resultMarkup = new Markup("");
-                selection = 0;
-                ResultTextBoxOpen = false;
-                return PageEnum.SCRIPTS;
-            }
-            StateHasChanged = false;
-            return PageEnum.SCRIPTS;
-        }
-
-        if (ConfirmationBoxOpen)
-        {
-            if(keypress.Key == ConsoleKey.LeftArrow || keypress.Key == ConsoleKey.RightArrow)
-            {
-                StateHasChanged = true;
-                confirm = !confirm;
-                return PageEnum.SCRIPTS;
-            }
-            if(keypress.Key == ConsoleKey.Enter)
-            {
-                if(confirm){
-                    StateHasChanged = true;
-                    resultMarkup = RemoveScript(ListOfScripts[selection].Id);
-                    ConfirmationBoxOpen = false;
-                    ResultTextBoxOpen = true;
-                    selection = 0;
-                    confirm = false;
-                    return PageEnum.SCRIPTS;
-                }
-                else
-                {
-                    StateHasChanged = true;
-                    ConfirmationBoxOpen = false;
-                    return PageEnum.SCRIPTS;
-                }
-            }
-            StateHasChanged = false;
-            return PageEnum.SCRIPTS;
-        }
-
-
-        if (UpdateTextBoxOpen)
-        {
-            if (!char.IsControl(keypress.KeyChar))
-            {
-                StateHasChanged = true;
-                input.Append(keypress.KeyChar);
-                return PageEnum.SCRIPTS;
-            }else if(input.Length != 0 && keypress.Key == ConsoleKey.Backspace)
-            {
-                StateHasChanged = true;
-                input.Remove(input.Length - 1, 1);
-                return PageEnum.SCRIPTS;
-            }
-            else if(input.Length != 0 && keypress.Key == ConsoleKey.Enter)
-            {
-                switch (InputBoxStep)
-                {
-                    case 1:
-                        StateHasChanged = true;
-                        path = input.ToString();
-                        input.Clear();
-                        input.Append(ListOfScripts[selection].Name);
-                        InputBoxStep++;
-                        return PageEnum.SCRIPTS;
-                    case 2:
-                        StateHasChanged = true;
-                        name = input.ToString();
-                        input.Clear();
-                        input.Append(ListOfScripts[selection].Description);
-                        InputBoxStep++;
-                        return PageEnum.SCRIPTS;
-                    case 3:
-                        StateHasChanged = true;
-                        description = input.ToString();
-                        input.Clear();
-                        InputBoxStep = 1;
-                        resultMarkup = UpdateScript(ListOfScripts[selection].Id);
-                        UpdateTextBoxOpen = false;
-                        ResultTextBoxOpen = true;
-                        return PageEnum.SCRIPTS;
-                    default:
-                        throw new Exception("Not possible to get here");
-                }
-            }
-            StateHasChanged = false;
-            return PageEnum.SCRIPTS;
-        }
-
-
-        if(keypress.KeyChar == '+')
-        {
-            StateHasChanged = true;
-            AddTextBoxOpen = true;
-            return PageEnum.SCRIPTS;
-        }
-        if(keypress.KeyChar == 'U' && ListOfScripts.Count > 0)
-        {
-            input.Append(ListOfScripts[selection].ScriptPath);
-            StateHasChanged = true;
-            UpdateTextBoxOpen = true;
-            return PageEnum.SCRIPTS;
-        }
-
-        if(keypress.Key == ConsoleKey.Enter && ListOfScripts.Count > 0)
-        {
-            StateHasChanged = true;
-            resultMarkup = RunScript();
-            RunningScriptBoxOpen = true;
-            ResultTextBoxOpen = true;
-            return PageEnum.SCRIPTS;
-        }
-
-        if(keypress.Key == ConsoleKey.Delete && ListOfScripts.Count > 0)
-        {
-            StateHasChanged = true;
-            ConfirmationBoxOpen = true;
-            return PageEnum.SCRIPTS;
+        switch(CurrentPageMode){
+            case PageMode.LIST:
+                return HandleListNav(keypress);
+            case PageMode.ADDSCRIPT:
+                return HandleAddNav(keypress);
+            case PageMode.CONFRIM:
+                return HandleConfirmNav(keypress);
+            case PageMode.RESULT:
+                return HandleResultNav(keypress);
+            case PageMode.RUNNINGSCRIPT:
+                return HandleRunningNav(keypress);
+            case PageMode.UPDATE:
+                return HandleUpdateNav(keypress);
         }
         StateHasChanged = false;
         return PageEnum.SCRIPTS;
@@ -315,44 +77,45 @@ public class ScriptPage : BasePage
 
     public Padder MakeTable()
     {
-        if (AddTextBoxOpen || ResultTextBoxOpen || ConfirmationBoxOpen || UpdateTextBoxOpen)
+        if(CurrentPageMode == PageMode.LIST)
         {
+            ListOfScripts = scriptController.GetAllScripts();
+            var table = new Table();
+            table.AddColumn("[purple]Scripts[/]", col => col.Centered());
+            table.AddColumn("");
+            table.AddColumn("[purple]Description[/]", col => col.Centered());
+            table.AddEmptyRow();
+            if(ListOfScripts.Count == 0)
+            {
+                table.AddEmptyRow();
+                table.AddRow("[purple]0 scripts found![/]", "[purple]|[/]", "[purple]Press [[ [slowblink]+[/] ]] to add a script to the list[/]");
+            }
+            else
+            {
+                for(int i = 0; i < ListOfScripts.Count; i++)
+                {
+                    if(selection == i)
+                    {
+                        table.AddRow($"[blue]>[/] [blue]{ListOfScripts[i].Name}[/]", "[blue]|[/]", $"[blue]{ListOfScripts[i].Description}[/]");
+                        table.AddEmptyRow();
+                        continue;
+                    }
+                    table.AddRow($"  [purple]{ListOfScripts[i].Name}[/]", "[purple]|[/]", $"[purple]{ListOfScripts[i].Description}[/]");
+                    table.AddEmptyRow();
+                }
+            }
+
+            var padder = new Padder(
+                Align.Center(
+                    table.Border(TableBorder.SimpleHeavy)
+                        .BorderColor(Color.Purple)
+                        .Expand()
+                ), new Padding(10, 2, 10 ,2)
+            );
+            return padder;
+        }else{
             return SwapPanel();
         }
-        ListOfScripts = scriptController.GetAllScripts();
-        var table = new Table();
-        table.AddColumn("[purple]Scripts[/]", col => col.Centered());
-        table.AddColumn("");
-        table.AddColumn("[purple]Description[/]", col => col.Centered());
-        table.AddEmptyRow();
-        if(ListOfScripts.Count == 0)
-        {
-            table.AddEmptyRow();
-            table.AddRow("[purple]0 scripts found![/]", "[purple]|[/]", "[purple]Press [[ [slowblink]+[/] ]] to add a script to the list[/]");
-        }
-        else
-        {
-            for(int i = 0; i < ListOfScripts.Count; i++)
-            {
-                if(selection == i)
-                {
-                    table.AddRow($"[blue]>[/] [blue]{ListOfScripts[i].Name}[/]", "[blue]|[/]", $"[blue]{ListOfScripts[i].Description}[/]");
-                    table.AddEmptyRow();
-                    continue;
-                }
-                table.AddRow($"  [purple]{ListOfScripts[i].Name}[/]", "[purple]|[/]", $"[purple]{ListOfScripts[i].Description}[/]");
-                table.AddEmptyRow();
-            }
-        }
-
-        var padder = new Padder(
-            Align.Center(
-                table.Border(TableBorder.SimpleHeavy)
-                    .BorderColor(Color.Purple)
-                    .Expand()
-            ), new Padding(10, 2, 10 ,2)
-        );
-        return padder;
     }
 
 
@@ -364,7 +127,7 @@ public class ScriptPage : BasePage
         var inputLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
                             new Panel(
                                 Align.Left(new Markup($"[blue]{input.ToString()}[slowblink]|[/][/]"), VerticalAlignment.Middle)
-                            ).Expand().Header($"{InputBoxHeader[InputBoxStep]}").HeaderAlignment(Justify.Center).RoundedBorder().BorderColor(Color.Blue)
+                            ).Expand().Header($"{InputBoxHeader[NewScript.InputStep]}").HeaderAlignment(Justify.Center).RoundedBorder().BorderColor(Color.Blue)
                         );
 
         var resultLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
@@ -395,18 +158,22 @@ public class ScriptPage : BasePage
                             ).Expand().RoundedBorder().BorderColor(Color.Blue)
                         );
 
-        if (AddTextBoxOpen || UpdateTextBoxOpen)
-        {
-            middle = inputLayout;
-        }else if (ResultTextBoxOpen)
-        {
-            middle = resultLayout;
-        }else if (ConfirmationBoxOpen)
-        {
-            middle = confirmationLayout;
-        }else if (RunningScriptBoxOpen)
-        {
-            middle = runningScriptLayout;
+        switch(CurrentPageMode){
+            case PageMode.ADDSCRIPT:
+                middle = inputLayout;
+                break;
+            case PageMode.RESULT:
+                middle = resultLayout;
+                break;
+            case PageMode.CONFRIM:
+                middle = confirmationLayout;
+                break;
+            case PageMode.UPDATE:
+                middle = inputLayout;
+                break;
+            case PageMode.RUNNINGSCRIPT:
+                middle = runningScriptLayout;
+                break;
         }
 
         return new Padder(new Layout("BodyRoot")
@@ -430,12 +197,164 @@ public class ScriptPage : BasePage
             ), new Padding(0,0,0,0));
     }
 
-
-    private Markup AddScript()
-    {
-        var resultMessage = scriptController.CreateScript(path, name, description);
-        return resultMessage;
+    private PageEnum HandleListNav(ConsoleKeyInfo keypress){
+        switch(keypress){
+            case {Key : ConsoleKey.UpArrow} when ListOfScripts.Count > 0:
+                if(selection == 0){
+                    StateHasChanged = true;
+                    selection = ListOfScripts.Count - 1;
+                    return PageEnum.SCRIPTS;
+                }else{
+                    selection--;
+                    StateHasChanged = true;
+                    return PageEnum.SCRIPTS;
+                }
+            case {Key : ConsoleKey.DownArrow} when ListOfScripts.Count > 0:
+                if(selection == ListOfScripts.Count - 1){
+                    StateHasChanged = true;
+                    selection = 0;
+                    return PageEnum.SCRIPTS;
+                }else{
+                    selection++;
+                    StateHasChanged = true;
+                    return PageEnum.SCRIPTS;
+                }
+            case {Key : ConsoleKey.Delete} when ListOfScripts.Count > 0:
+                StateHasChanged = true;
+                CurrentPageMode = PageMode.CONFRIM;
+                return PageEnum.SCRIPTS;
+            case {Key : ConsoleKey.Escape}:
+                StateHasChanged = true;
+                selection = 0;
+                return PageEnum.MENU;
+            case {Key : ConsoleKey.Enter} when ListOfScripts.Count > 0:
+                StateHasChanged = true;
+                bool didItStart = RunScript();
+                if(didItStart == false){
+                    resultMarkup = new Markup("[red]\u2717 Script Error:[/] Failed to start!");
+                    CurrentPageMode = PageMode.RESULT;
+                    return PageEnum.SCRIPTS;
+                }else{
+                    CurrentPageMode = PageMode.RUNNINGSCRIPT;
+                    return PageEnum.SCRIPTS;
+                }
+            case {KeyChar : '+'}:
+                CurrentPageMode = PageMode.ADDSCRIPT;
+                StateHasChanged = true;
+                NewScript = new NewListItem(db, scriptController);
+                return PageEnum.SCRIPTS;
+            case {KeyChar : 'U'} when ListOfScripts.Count > 0:
+                input.Append(ListOfScripts[selection].ScriptPath);
+                CurrentPageMode = PageMode.UPDATE;
+                StateHasChanged = true;
+                return PageEnum.SCRIPTS;
+        }
+        StateHasChanged = false;
+        return PageEnum.SCRIPTS;
     }
+
+    private PageEnum HandleAddNav(ConsoleKeyInfo keypress){
+        switch (keypress){
+            case {Key : ConsoleKey.Backspace} when input.Length > 0:
+                StateHasChanged = true;
+                input.Remove(input.Length - 1, 1);
+                return PageEnum.SCRIPTS;
+            case {Key : ConsoleKey.Enter} when input.Length > 0:
+                StateHasChanged = true;
+                Markup? result = NewScript.AddToList(input.ToString());
+                if(result == null){
+                    input.Clear();
+                    return PageEnum.SCRIPTS;
+                }else{
+                    resultMarkup = result;
+                    CurrentPageMode = PageMode.RESULT;
+                    return PageEnum.SCRIPTS;
+                }
+            case {KeyChar : char c} when !char.IsControl(c):
+                StateHasChanged = true;
+                input.Append(keypress.KeyChar);
+                return PageEnum.SCRIPTS;
+        }
+        StateHasChanged = false;
+        return PageEnum.SCRIPTS;
+    }
+
+    private PageEnum HandleConfirmNav(ConsoleKeyInfo keypress){
+        switch(keypress){
+            case {Key : ConsoleKey.RightArrow}:
+                StateHasChanged = true;
+                confirm = !confirm;
+                return PageEnum.SCRIPTS;
+            case {Key : ConsoleKey.LeftArrow}:
+                StateHasChanged = true;
+                confirm = !confirm;
+                return PageEnum.SCRIPTS;
+            case {Key : ConsoleKey.Enter}:
+                StateHasChanged = true;
+                confirm = false;
+                resultMarkup = RemoveScript(ListOfScripts[selection].Id);
+                CurrentPageMode = PageMode.LIST;
+                return PageEnum.SCRIPTS;
+        }
+        StateHasChanged = false;
+        return PageEnum.SCRIPTS;
+    }
+
+    private PageEnum HandleResultNav(ConsoleKeyInfo keypress){
+        switch(keypress){
+            case {Key :  ConsoleKey.Enter}:
+                input.Clear();
+                selection = 0;
+                resultMarkup = new Markup("");
+                StateHasChanged = true;
+                CurrentPageMode = PageMode.LIST;
+                return PageEnum.SCRIPTS;
+        }
+        StateHasChanged = false;
+        return PageEnum.SCRIPTS;
+    }
+    
+    private PageEnum HandleRunningNav(ConsoleKeyInfo keypress){
+        if(scriptRunner.IsScriptRunning()){
+            return PageEnum.SCRIPTS;
+        }else{
+            resultMarkup = ScriptResult();
+            CurrentPageMode = PageMode.RESULT;
+            return PageEnum.SCRIPTS;
+        }
+    }
+    private PageEnum HandleUpdateNav(ConsoleKeyInfo keypress){
+        switch(keypress){
+            case {Key : ConsoleKey.Backspace} when input.Length > 0:
+                StateHasChanged = true;
+                input.Remove(input.Length - 1, 1);
+                return PageEnum.SCRIPTS;
+            case {Key : ConsoleKey.Enter} when input.Length > 0:
+                StateHasChanged = true;
+                Markup? result = NewScript.AddToList(input.ToString());
+                if(result == null){
+                    input.Clear();
+                    if(NewScript.InputStep == 2){
+                        input.Append(ListOfScripts[selection].Name);
+                    }else{
+                        input.Append(ListOfScripts[selection].Description);
+                    }
+                    return PageEnum.SCRIPTS;
+                }else{
+                    resultMarkup = result;
+                    CurrentPageMode = PageMode.RESULT;
+                    return PageEnum.SCRIPTS;
+                }
+            case {KeyChar : char c} when !char.IsControl(c):
+                StateHasChanged = true;
+                input.Append(keypress.KeyChar);
+                return PageEnum.SCRIPTS;
+        }
+        StateHasChanged = false;
+        return PageEnum.SCRIPTS;
+    }
+
+
 
     private Markup RemoveScript(int i)
     {
@@ -443,23 +362,13 @@ public class ScriptPage : BasePage
         return result;
     }
 
-    private Markup UpdateScript(int i)
-    {
-        var result = scriptController.UpdateScript(i, name, description, path);
-        return result;
-    }
 
-    private Markup RunScript()
+    private bool RunScript()
     {
         scriptRunner = new ScriptRunner();
-        bool started = scriptRunner.Start(ListOfScripts[selection]);
-        if(started == false)
-        {
-            return new Markup("[red]\u2717 Error:[/] Script failed to start!");
-        }
-        
-        return new Markup ("[bold blue]Script is running...[/]");
+        return scriptRunner.Start(ListOfScripts[selection]);
     }
+
     private Markup ScriptResult()
     {
         return scriptRunner.Result();
@@ -470,3 +379,16 @@ public class ScriptPage : BasePage
         return StateHasChanged;
     }
 }
+
+
+public enum PageMode{
+    LIST,
+    ADDSCRIPT,
+    RESULT,
+    CONFRIM,
+    UPDATE,
+    RUNNINGSCRIPT
+}
+
+
+
