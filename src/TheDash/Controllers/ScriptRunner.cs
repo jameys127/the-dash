@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Spectre.Console;
 
 public class ScriptRunner
@@ -8,10 +9,14 @@ public class ScriptRunner
     public bool Start(Script script)
     {
         process = new Process();
+        ScriptFileInfo parsed = ParsePath(script);
         try
         {
-            process.StartInfo.UseShellExecute = true;
-            process.StartInfo.FileName = script.ScriptPath;
+            process.StartInfo.FileName = "konsole";
+            process.StartInfo.Arguments = "-e ./" + parsed.ScriptFile;
+            process.StartInfo.WorkingDirectory = parsed.ScriptPath;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = false;
             bool started = process.Start();
             if (started)
             {
@@ -59,23 +64,29 @@ public class ScriptRunner
             return new Markup ($"[green]\u2713 Success:[/] Finished with exit code {exitCode}");            
         }
     }
-
-    // public Markup RunSelectedScript(Script script)
-    // {
-    //     string path = script.ScriptPath;
-
-    //     try
-    //     {
-    //         using (Process runScript = new Process())
-    //         {
-    //             runScript.StartInfo.UseShellExecute = true;
-    //             runScript.StartInfo.FileName = path;
-    //             runScript.Start();
-    //             return new Markup("[green]\u2713 Success:[/] Script successfully ran!");
-    //         }
-    //     }catch(Exception)
-    //     {
-    //         return new Markup($"[red]\u2717 Script Error: [/]Couldn't run script! Please try again.");
-    //     }
-    // }
+    
+    public ScriptFileInfo ParsePath(Script script){
+        string input = script.ScriptPath;
+        string type = "";
+        string file = "";
+        string path = "";
+        int i = input.Length - 1;
+        StringBuilder inputBuilder = new StringBuilder();
+        while(input[i] != '/' && input[i] != '\\'){
+           inputBuilder.Insert(0, input[i]);
+           if(input[i] == '.'){
+                type = inputBuilder.ToString();
+           }
+           i--;
+        }
+        file = inputBuilder.ToString();
+        inputBuilder.Clear();
+        while(i >=0){
+            inputBuilder.Insert(0, input[i]);
+            i--;
+        }
+        path = inputBuilder.ToString();
+        ScriptFileInfo parsed = new ScriptFileInfo(type, file, path);
+        return parsed;
+    }
 }

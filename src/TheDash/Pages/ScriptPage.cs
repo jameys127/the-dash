@@ -8,7 +8,7 @@ public class ScriptPage : BasePage
     private Database db;
     private ScriptController scriptController;
     private ScriptRunner scriptRunner;
-    private NewListItem NewScript;
+    private ListItem listItem;
 
     // *** Prompt boxes that popup booleans ***
     private PageMode CurrentPageMode = PageMode.LIST;
@@ -37,7 +37,7 @@ public class ScriptPage : BasePage
         this.db = db;
         scriptController = new ScriptController(db);
         scriptRunner = new ScriptRunner();
-        NewScript = new NewListItem(db, scriptController);
+        listItem = new ListItem(db, scriptController);
     }
 
 
@@ -127,7 +127,7 @@ public class ScriptPage : BasePage
         var inputLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
                             new Panel(
                                 Align.Left(new Markup($"[blue]{input.ToString()}[slowblink]|[/][/]"), VerticalAlignment.Middle)
-                            ).Expand().Header($"{InputBoxHeader[NewScript.InputStep]}").HeaderAlignment(Justify.Center).RoundedBorder().BorderColor(Color.Blue)
+                            ).Expand().Header($"{InputBoxHeader[listItem.InputStep]}").HeaderAlignment(Justify.Center).RoundedBorder().BorderColor(Color.Blue)
                         );
 
         var resultLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
@@ -241,11 +241,12 @@ public class ScriptPage : BasePage
             case {KeyChar : '+'}:
                 CurrentPageMode = PageMode.ADDSCRIPT;
                 StateHasChanged = true;
-                NewScript = new NewListItem(db, scriptController);
+                listItem = new ListItem(db, scriptController);
                 return PageEnum.SCRIPTS;
             case {KeyChar : 'U'} when ListOfScripts.Count > 0:
                 input.Append(ListOfScripts[selection].ScriptPath);
                 CurrentPageMode = PageMode.UPDATE;
+		listItem = new ListItem(db, scriptController);
                 StateHasChanged = true;
                 return PageEnum.SCRIPTS;
         }
@@ -261,7 +262,7 @@ public class ScriptPage : BasePage
                 return PageEnum.SCRIPTS;
             case {Key : ConsoleKey.Enter} when input.Length > 0:
                 StateHasChanged = true;
-                Markup? result = NewScript.AddToList(input.ToString());
+                Markup? result = listItem.AddToList(input.ToString());
                 if(result == null){
                     input.Clear();
                     return PageEnum.SCRIPTS;
@@ -293,6 +294,7 @@ public class ScriptPage : BasePage
                 StateHasChanged = true;
                 confirm = false;
                 resultMarkup = RemoveScript(ListOfScripts[selection].Id);
+                selection = 0;
                 CurrentPageMode = PageMode.LIST;
                 return PageEnum.SCRIPTS;
         }
@@ -331,10 +333,10 @@ public class ScriptPage : BasePage
                 return PageEnum.SCRIPTS;
             case {Key : ConsoleKey.Enter} when input.Length > 0:
                 StateHasChanged = true;
-                Markup? result = NewScript.AddToList(input.ToString());
+                Markup? result = listItem.UpdateToList(input.ToString(), ListOfScripts[selection]);
                 if(result == null){
                     input.Clear();
-                    if(NewScript.InputStep == 2){
+                    if(listItem.InputStep == 2){
                         input.Append(ListOfScripts[selection].Name);
                     }else{
                         input.Append(ListOfScripts[selection].Description);

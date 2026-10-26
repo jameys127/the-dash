@@ -1,6 +1,6 @@
 using Spectre.Console;
 
-public class NewListItem{
+public class ListItem{
     private Database db;
     private ScriptController scriptController;
 
@@ -9,7 +9,7 @@ public class NewListItem{
     private string NameOfScript {get; set;}
     private string DescOfScript {get; set;}
 
-    public NewListItem(Database db, ScriptController scriptController){
+    public ListItem(Database db, ScriptController scriptController){
         this.db = db;
         this.scriptController = scriptController;
         InputStep = 1;
@@ -34,9 +34,29 @@ public class NewListItem{
         }
         return null;
     }
+    public Markup? UpdateToList(string input, Script script){
+        switch (InputStep){
+            case 1:
+                PathToScript = input;
+                InputStep++;
+                return null;
+            case 2:
+                NameOfScript = input;
+                InputStep++;
+                return null;
+            case 3:
+                DescOfScript = input;
+                return UpdateToDb(script);
+        }
+        return null;
+    }
 
     public Markup AddToDb(){
         Markup result = scriptController.CreateScript(PathToScript, NameOfScript, DescOfScript);
+        return result;
+    }
+    private Markup UpdateToDb(Script script){
+        Markup result = scriptController.UpdateScript(script.Id, NameOfScript, DescOfScript, PathToScript);
         return result;
     }
 }

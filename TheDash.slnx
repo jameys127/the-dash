@@ -3,4 +3,7 @@
   <Folder Name="/src/TheDash/">
     <Project Path="src/TheDash/TheDash.csproj" />
   </Folder>
+  <Folder Name="/Test/">
+    <Project Path="Test/TheDash.Tests/TheDash.Tests.csproj" />
+  </Folder>
 </Solution>
