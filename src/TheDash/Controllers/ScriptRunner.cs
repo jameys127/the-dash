@@ -8,16 +8,18 @@ public class ScriptRunner
 
     public bool Start(Script script)
     {
-        process = new Process();
-        ScriptFileInfo parsed = ParsePath(script);
         try
         {
-            process.StartInfo.FileName = "konsole";
-            process.StartInfo.Arguments = "-e ./" + parsed.ScriptFile;
-            process.StartInfo.WorkingDirectory = parsed.ScriptPath;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.CreateNoWindow = false;
-            bool started = process.Start();
+            bool started;
+            process = new ProcessInfo().MakeProcess(script);
+            if(OperatingSystem.IsWindows()){
+                process.StartInfo.UseShellExecute = true;
+                started = process.Start();
+            }else{
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = false;
+                started = process.Start();
+            }
             if (started)
             {
                 return true;
