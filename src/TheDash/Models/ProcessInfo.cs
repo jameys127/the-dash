@@ -14,6 +14,12 @@ public class ProcessInfo{
         Process process = new Process();
         ScriptFileInfo parsedScript = ParseScript(script);
         if(OperatingSystem.IsWindows()){
+            if(parsedScript.ScriptType == TypeOfScript.POWERSHELL){
+                process.StartInfo.FileName = "powershell.exe";
+                process.StartInfo.WorkingDirectory = parsedScript.ScriptPath;
+                process.StartInfo.Arguments = $"-ExecutionPolicy ByPass -File \"{parsedScript.ScriptFile}\"";
+                return process;
+            }
             process.StartInfo.FileName = (script.ScriptPath);
             return process;
         }else{
