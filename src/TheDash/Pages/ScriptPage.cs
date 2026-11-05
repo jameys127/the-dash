@@ -271,6 +271,12 @@ public class ScriptPage : BasePage
                     CurrentPageMode = PageMode.RESULT;
                     return PageEnum.SCRIPTS;
                 }
+            case {Key : ConsoleKey.Escape}:
+                StateHasChanged = true;
+                input.Clear();
+                selection = 0;
+                CurrentPageMode = PageMode.LIST;
+                return PageEnum.SCRIPTS;
             case {KeyChar : char c} when !char.IsControl(c):
                 StateHasChanged = true;
                 input.Append(keypress.KeyChar);
@@ -347,6 +353,12 @@ public class ScriptPage : BasePage
                     CurrentPageMode = PageMode.RESULT;
                     return PageEnum.SCRIPTS;
                 }
+            case {Key : ConsoleKey.Escape}:
+                StateHasChanged = true;
+                input.Clear();
+                selection = 0;
+                CurrentPageMode = PageMode.LIST;
+                return PageEnum.SCRIPTS;
             case {KeyChar : char c} when !char.IsControl(c):
                 StateHasChanged = true;
                 input.Append(keypress.KeyChar);
