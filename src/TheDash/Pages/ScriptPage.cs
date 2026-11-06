@@ -298,10 +298,15 @@ public class ScriptPage : BasePage
                 return PageEnum.SCRIPTS;
             case {Key : ConsoleKey.Enter}:
                 StateHasChanged = true;
-                confirm = false;
-                resultMarkup = RemoveScript(ListOfScripts[selection].Id);
-                selection = 0;
-                CurrentPageMode = PageMode.LIST;
+                if(confirm){
+                    confirm = false;
+                    resultMarkup = RemoveScript(ListOfScripts[selection].Id);
+                    selection = 0;
+                    CurrentPageMode = PageMode.LIST;
+                }else{
+                    selection = 0;
+                    CurrentPageMode = PageMode.LIST;
+                }
                 return PageEnum.SCRIPTS;
         }
         StateHasChanged = false;
