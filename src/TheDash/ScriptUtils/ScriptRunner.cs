@@ -66,29 +66,6 @@ public class ScriptRunner
             return new Markup ($"[green]\u2713 Success:[/] Finished with exit code {exitCode}");            
         }
     }
-    
-    public ScriptFileInfo ParsePath(Script script){
-        string input = script.ScriptPath;
-        string type = "";
-        string file = "";
-        string path = "";
-        int i = input.Length - 1;
-        StringBuilder inputBuilder = new StringBuilder();
-        while(input[i] != '/' && input[i] != '\\'){
-           inputBuilder.Insert(0, input[i]);
-           if(input[i] == '.'){
-                type = inputBuilder.ToString();
-           }
-           i--;
-        }
-        file = inputBuilder.ToString();
-        inputBuilder.Clear();
-        while(i >=0){
-            inputBuilder.Insert(0, input[i]);
-            i--;
-        }
-        path = inputBuilder.ToString();
-        ScriptFileInfo parsed = new ScriptFileInfo(type, file, path);
-        return parsed;
-    }
 }
+    
+

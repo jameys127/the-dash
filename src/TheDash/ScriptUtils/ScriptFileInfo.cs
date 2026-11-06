@@ -19,6 +19,8 @@ public class ScriptFileInfo{
                 return TypeOfScript.BATCH;
             case ".ps1":
                 return TypeOfScript.POWERSHELL;
+            case ".py":
+                return TypeOfScript.PYTHON;
             default:
                 throw new Exception("Invalid script language");
         }
@@ -31,5 +33,6 @@ public class ScriptFileInfo{
 public enum TypeOfScript{
     BASH,
     BATCH,
-    POWERSHELL
+    POWERSHELL,
+    PYTHON
 }

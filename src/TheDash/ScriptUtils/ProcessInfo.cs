@@ -4,7 +4,7 @@ public class ProcessInfo{
     private record TerminalProfile(string EnvironmentVariable, string FileName, string Prefix);
     private TerminalProfile[] Terminals = {
         new ("KITTY_WINDOW_ID", "kitty", ""),
-        new ("ALACRITTY_WIND0W_ID", "alacritty", "-e"),
+        new ("ALACRITTY_WINDOW_ID", "alacritty", "-e"),
         new ("KONSOLE_VERSION", "konsole", "-e"),
         new ("GHOSTTY_RESOURCES_DIR", "ghostty", "-e")
     };
@@ -14,14 +14,26 @@ public class ProcessInfo{
         Process process = new Process();
         ScriptFileInfo parsedScript = ParseScript(script);
         if(OperatingSystem.IsWindows()){
-            if(parsedScript.ScriptType == TypeOfScript.POWERSHELL){
-                process.StartInfo.FileName = "powershell.exe";
-                process.StartInfo.WorkingDirectory = parsedScript.ScriptPath;
-                process.StartInfo.Arguments = $"-ExecutionPolicy ByPass -File \"{parsedScript.ScriptFile}\"";
-                return process;
+            switch(parsedScript.ScriptType){
+                case TypeOfScript.POWERSHELL:
+                    process.StartInfo.FileName = "powershell.exe";
+                    process.StartInfo.WorkingDirectory = parsedScript.ScriptPath;
+                    process.StartInfo.Arguments = $"-ExecutionPolicy ByPass -File \"{parsedScript.ScriptFile}\"";
+                    return process;
+                case TypeOfScript.PYTHON:
+                    process.StartInfo.FileName = "python.exe";
+                    process.StartInfo.WorkingDirectory = parsedScript.ScriptPath;
+                    process.StartInfo.Arguments = $"\"{parsedScript.ScriptFile}\"";
+                    return process;
+                case TypeOfScript.BATCH:
+                    process.StartInfo.FileName = "cmd.exe";
+                    process.StartInfo.WorkingDirectory = parsedScript.ScriptPath;
+                    process.StartInfo.Arguments = $"/c \"{parsedScript.ScriptFile}\"";
+                    return process;
+                default:
+                    process.StartInfo.FileName = script.ScriptPath;
+                    return process;
             }
-            process.StartInfo.FileName = (script.ScriptPath);
-            return process;
         }else{
             process = FindTerminal(process);
             process.StartInfo.WorkingDirectory = parsedScript.ScriptPath;
@@ -35,7 +47,9 @@ public class ProcessInfo{
         foreach (var env in Terminals){
             if(!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(env.EnvironmentVariable))){
                 process.StartInfo.FileName = env.FileName;
-                process.StartInfo.ArgumentList.Add(env.Prefix);
+                if(env.Prefix != ""){
+                    process.StartInfo.ArgumentList.Add(env.Prefix);
+                }
                 return process;
             }
         }
