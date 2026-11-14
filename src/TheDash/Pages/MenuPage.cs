@@ -4,7 +4,7 @@ using Spectre.Console.Rendering;
 public class MenuPage : BasePage
 {
     
-    private List<string> MenuItems = new List<string> { "Scripts", "Notes", "Game", "Exit"};
+    private List<string> MenuItems = new List<string> { "Scripts", "Notes", "Exit"};
     private int menuSelection = 0;
     private Database db;
     public MenuPage(Database db)

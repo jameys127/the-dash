@@ -30,9 +30,12 @@ public class ProcessInfo{
                     process.StartInfo.WorkingDirectory = parsedScript.ScriptPath;
                     process.StartInfo.Arguments = $"/c \"{parsedScript.ScriptFile}\"";
                     return process;
-                default:
-                    process.StartInfo.FileName = script.ScriptPath;
+                case TypeOfScript.EXE:
+                    process.StartInfo.FileName = parsedScript.ScriptFile;
+                    process.StartInfo.WorkingDirectory = parsedScript.ScriptPath;
                     return process;
+                default:
+                    throw new Exception("Not a supported file type");
             }
         }else{
             process = FindTerminal(process);
@@ -60,10 +63,14 @@ public class ProcessInfo{
         string fileExtension = Path.GetExtension(script.ScriptPath);
         string fileName = Path.GetFileName(script.ScriptPath);
         string? filePath = Path.GetDirectoryName(script.ScriptPath);
-        if(filePath != null){
+        if(!Directory.Exists(filePath) || !File.Exists(Path.Combine(filePath, fileName)))
+        {
+            throw new Exception("Script does not exist");
+        }
+        if(filePath != null && fileName != "" && fileExtension != ""){
             return new ScriptFileInfo(fileExtension, fileName, filePath);
         }else{
-            throw new Exception("Path directory name error");
+            throw new Exception("Script does not exist");
         }
     }
 }

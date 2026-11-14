@@ -6,7 +6,7 @@ public class ScriptRunner
 {
     Process? process;
 
-    public bool Start(Script script)
+    public ProcessResponse Start(Script script)
     {
         try
         {
@@ -22,21 +22,21 @@ public class ScriptRunner
             }
             if (started)
             {
-                return true;
+                return new ProcessResponse(true, new Markup("Success"));
             }
             else
             {
                 process.Dispose();
                 process = null;
-                return false;
+                return new ProcessResponse(false, new Markup("[red]\u2717 Script Error: [/]Script failed to start!"));
             }
             
         }
-        catch(Exception)
+        catch(Exception e)
         {
             process?.Dispose();
             process = null;
-            return false;
+            return new ProcessResponse(false, new Markup($"[red]\u2717 Script Error: [/]{Markup.Escape(e.Message)}"));
         }
     }
 

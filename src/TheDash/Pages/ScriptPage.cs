@@ -8,6 +8,7 @@ public class ScriptPage : BasePage
     private Database db;
     private ScriptController scriptController;
     private ScriptRunner scriptRunner;
+    private LoadingSpinner loadingSpinner;
     private ListItem listItem;
 
     // *** Prompt boxes that popup booleans ***
@@ -37,6 +38,7 @@ public class ScriptPage : BasePage
         this.db = db;
         scriptController = new ScriptController(db);
         scriptRunner = new ScriptRunner();
+        loadingSpinner = new LoadingSpinner(Spinner.Known.Dots);
         listItem = new ListItem(db, scriptController);
     }
 
@@ -96,7 +98,7 @@ public class ScriptPage : BasePage
                 {
                     if(selection == i)
                     {
-                        table.AddRow($"[blue]>[/] [blue]{ListOfScripts[i].Name}[/]", "[blue]|[/]", $"[blue]{ListOfScripts[i].Description}[/]");
+                        table.AddRow($"[blue]>[/] [blue]{Markup.Escape(ListOfScripts[i].Name)}[/]", "[blue]|[/]", $"[blue]{Markup.Escape(ListOfScripts[i].Description)}[/]");
                         table.AddEmptyRow();
                         continue;
                     }
@@ -126,7 +128,7 @@ public class ScriptPage : BasePage
 
         var inputLayout = new Layout("MiddleColumn").Ratio(2).MinimumSize(5).Update(
                             new Panel(
-                                Align.Left(new Markup($"[blue]{input.ToString()}[slowblink]|[/][/]"), VerticalAlignment.Middle)
+                                Align.Left(new Markup($"[blue]{Markup.Escape(input.ToString())}[slowblink]|[/][/]"), VerticalAlignment.Middle)
                             ).Expand().Header($"{InputBoxHeader[listItem.InputStep]}").HeaderAlignment(Justify.Center).RoundedBorder().BorderColor(Color.Blue)
                         );
 
@@ -152,7 +154,7 @@ public class ScriptPage : BasePage
                             new Panel(
                                 Align.Center(new Rows(
                                     new Text(""),
-                                    new Markup("[bold blue]Script is running.. [/]"),
+                                    new Markup($"[bold green]{loadingSpinner.CurrentFrame()}[/] Script is running"),
                                     new Text("")
                                 ), VerticalAlignment.Middle)
                             ).Expand().RoundedBorder().BorderColor(Color.Blue)
@@ -231,10 +233,10 @@ public class ScriptPage : BasePage
                 StateHasChanged = true;
                 bool didItStart = RunScript();
                 if(didItStart == false){
-                    resultMarkup = new Markup("[red]\u2717 Script Error:[/] Failed to start!");
                     CurrentPageMode = PageMode.RESULT;
                     return PageEnum.SCRIPTS;
                 }else{
+                    loadingSpinner.Start();
                     CurrentPageMode = PageMode.RUNNINGSCRIPT;
                     return PageEnum.SCRIPTS;
                 }
@@ -329,8 +331,11 @@ public class ScriptPage : BasePage
     
     private PageEnum HandleRunningNav(ConsoleKeyInfo keypress){
         if(scriptRunner.IsScriptRunning()){
+            StateHasChanged = true;
             return PageEnum.SCRIPTS;
         }else{
+            StateHasChanged = true;
+            loadingSpinner.Stop();
             resultMarkup = ScriptResult();
             CurrentPageMode = PageMode.RESULT;
             return PageEnum.SCRIPTS;
@@ -385,7 +390,16 @@ public class ScriptPage : BasePage
     private bool RunScript()
     {
         scriptRunner = new ScriptRunner();
-        return scriptRunner.Start(ListOfScripts[selection]);
+        ProcessResponse resp = scriptRunner.Start(ListOfScripts[selection]);
+        if(resp.Started == false)
+        {
+            resultMarkup = resp.Response;
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 
     private Markup ScriptResult()
