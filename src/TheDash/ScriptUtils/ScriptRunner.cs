@@ -60,10 +60,9 @@ public class ScriptRunner
         }
         else
         {
-            int exitCode = process.ExitCode;
             process.Dispose();
             process = null;
-            return new Markup ($"[green]\u2713 Success:[/] Finished with exit code {exitCode}");            
+            return new Markup ($"[green]\u2713 Success:[/] No issues!");            
         }
     }
 }

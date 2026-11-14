@@ -40,6 +40,7 @@ public class ScriptPage : BasePage
         scriptRunner = new ScriptRunner();
         loadingSpinner = new LoadingSpinner(Spinner.Known.Dots);
         listItem = new ListItem(db, scriptController);
+        LoadListOfScripts();
     }
 
 
@@ -50,7 +51,7 @@ public class ScriptPage : BasePage
                 return HandleListNav(keypress);
             case PageMode.ADDSCRIPT:
                 return HandleAddNav(keypress);
-            case PageMode.CONFRIM:
+            case PageMode.CONFIRM:
                 return HandleConfirmNav(keypress);
             case PageMode.RESULT:
                 return HandleResultNav(keypress);
@@ -81,7 +82,6 @@ public class ScriptPage : BasePage
     {
         if(CurrentPageMode == PageMode.LIST)
         {
-            ListOfScripts = scriptController.GetAllScripts();
             var table = new Table();
             table.AddColumn("[purple]Scripts[/]", col => col.Centered());
             table.AddColumn("");
@@ -167,7 +167,7 @@ public class ScriptPage : BasePage
             case PageMode.RESULT:
                 middle = resultLayout;
                 break;
-            case PageMode.CONFRIM:
+            case PageMode.CONFIRM:
                 middle = confirmationLayout;
                 break;
             case PageMode.UPDATE:
@@ -223,7 +223,7 @@ public class ScriptPage : BasePage
                 }
             case {Key : ConsoleKey.Delete} when ListOfScripts.Count > 0:
                 StateHasChanged = true;
-                CurrentPageMode = PageMode.CONFRIM;
+                CurrentPageMode = PageMode.CONFIRM;
                 return PageEnum.SCRIPTS;
             case {Key : ConsoleKey.Escape}:
                 StateHasChanged = true;
@@ -270,6 +270,7 @@ public class ScriptPage : BasePage
                     return PageEnum.SCRIPTS;
                 }else{
                     resultMarkup = result;
+                    LoadListOfScripts();
                     CurrentPageMode = PageMode.RESULT;
                     return PageEnum.SCRIPTS;
                 }
@@ -304,6 +305,7 @@ public class ScriptPage : BasePage
                     confirm = false;
                     resultMarkup = RemoveScript(ListOfScripts[selection].Id);
                     selection = 0;
+                    LoadListOfScripts();
                     CurrentPageMode = PageMode.LIST;
                 }else{
                     selection = 0;
@@ -360,6 +362,7 @@ public class ScriptPage : BasePage
                     return PageEnum.SCRIPTS;
                 }else{
                     resultMarkup = result;
+                    LoadListOfScripts();
                     CurrentPageMode = PageMode.RESULT;
                     return PageEnum.SCRIPTS;
                 }
@@ -402,6 +405,11 @@ public class ScriptPage : BasePage
         }
     }
 
+    private void LoadListOfScripts()
+    {
+        ListOfScripts = scriptController.GetAllScripts();
+    }
+
     private Markup ScriptResult()
     {
         return scriptRunner.Result();
@@ -411,6 +419,8 @@ public class ScriptPage : BasePage
     {
         return StateHasChanged;
     }
+
+
 }
 
 
@@ -418,7 +428,7 @@ public enum PageMode{
     LIST,
     ADDSCRIPT,
     RESULT,
-    CONFRIM,
+    CONFIRM,
     UPDATE,
     RUNNINGSCRIPT
 }
