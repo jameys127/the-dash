@@ -3,11 +3,19 @@ using Spectre.Console.Rendering;
 
 public class NotePage : BasePage{
     
-    Database db;
+    private Database db;
+    private NotesController notesController;
+
+    private int selection;
+    private bool booksSelected;
+
     
 
     public NotePage(Database db){
         this.db = db;
+        notesController = new NotesController(db);
+        selection = 0;
+        booksSelected = true;
     }
 
 
