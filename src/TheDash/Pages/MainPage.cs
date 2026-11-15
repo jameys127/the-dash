@@ -15,8 +15,10 @@ public class MainPage
     {
         MenuPage menu = new MenuPage(db);
 	    ScriptPage script = new ScriptPage(db);
+        NotePage note = new NotePage(db);
         AllPages.Add(PageEnum.MENU, menu);
 	    AllPages.Add(PageEnum.SCRIPTS, script);
+        AllPages.Add(PageEnum.NOTES, note);
         RenderedPage = PageEnum.MENU;
         page = AllPages[RenderedPage];
         currentRender = page.ReturnRender();

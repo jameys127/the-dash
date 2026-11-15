@@ -2,29 +2,41 @@ using Microsoft.Data.Sqlite;
 
 public class Database{
 
-	private readonly string  _dbPath;
+	private readonly string _dbPathScript;
+    private readonly string _dbPathNote;
 
-	public Database(string dbPath){
-		_dbPath = dbPath;
+	public Database(string dbPathScript, string dbPathNote){
+		_dbPathScript = dbPathScript;
+        _dbPathNote = dbPathNote;
 	}
 
-	public SqliteConnection Open(){
-		var connection = new SqliteConnection($"Data Source={_dbPath};Foreign Keys=True");
+	public SqliteConnection OpenScript(){
+		var connection = new SqliteConnection($"Data Source={_dbPathScript};Foreign Keys=True");
 		connection.Open();
 		return connection;
 	}
+    public SqliteConnection OpenNote(){
+        var connection = new SqliteConnection($"Data Source={_dbPathNote};Foreign Keys=True");
+        connection.Open();
+        return connection;
+    }
 
 	public void TablesIfNotExist(){
-		using var connection = Open();
-		var command = connection.CreateCommand();
-		command.CommandText = """
+		using var connectionScript = OpenScript();
+		var commandScript = connectionScript.CreateCommand();
+		commandScript.CommandText = """
             CREATE TABLE IF NOT EXISTS Scripts (
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 description TEXT NOT NULL,
                 path TEXT NOT NULL
             );
-            CREATE TABLE IF NOT EXISTS Folders (
+        """;
+
+        using var connectionNote = OpenNote();
+        var commandNote = connectionNote.CreateCommand();
+        commandNote.CommandText = """
+            CREATE TABLE IF NOT EXISTS Books (
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE
             );
@@ -32,11 +44,13 @@ public class Database{
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 body TEXT NOT NULL,
-                folder_id INTEGER NOT NULL,
-                FOREIGN KEY (folder_id) REFERENCES Folders(id) ON DELETE CASCADE,
-                UNIQUE (folder_id, name)
+                book_id INTEGER NOT NULL,
+                FOREIGN KEY (book_id) REFERENCES Books(id) ON DELETE CASCADE,
+                UNIQUE (book_id, name)
             );
         """;
-		command.ExecuteNonQuery();
+
+        commandNote.ExecuteNonQuery();    
+		commandScript.ExecuteNonQuery();
 	}
 }

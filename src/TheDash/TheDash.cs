@@ -9,8 +9,9 @@ class Dash{
 			"TheDash"
 		);
 		Directory.CreateDirectory(folder);
-		var dbPath = Path.Combine(folder, "thedash.db");
-		Database db = new Database(dbPath);
+		var dbPathScript = Path.Combine(folder, "thedashscripts.db");
+		var dbPathNote = Path.Combine(folder, "thedashnotes.db");
+		Database db = new Database(dbPathScript, dbPathNote);
 		db.TablesIfNotExist();
 
 		MainPage mainPage = new MainPage(db);

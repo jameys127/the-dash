@@ -11,7 +11,7 @@ public class ScriptController
 
     public Markup CreateScript(string path, string name, string description)
     {
-        using var connection = db.Open();
+        using var connection = db.OpenScript();
         using var command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO Scripts (name, description, path) VALUES ($name, $description, $path);
@@ -33,7 +33,7 @@ public class ScriptController
     public List<Script> GetAllScripts()
     {
         List<Script> scripts = new List<Script>();
-        using var connection = db.Open();
+        using var connection = db.OpenScript();
         using var command = connection.CreateCommand();
         command.CommandText = """
             SELECT * FROM Scripts;
@@ -53,7 +53,7 @@ public class ScriptController
 
     public Markup DeleteScript(int i)
     {
-        using var connection = db.Open();
+        using var connection = db.OpenScript();
         using var command = connection.CreateCommand();
         command.CommandText = """
             DELETE FROM Scripts WHERE id = $i;
@@ -72,7 +72,7 @@ public class ScriptController
 
     public Markup UpdateScript(int id, string name, string description, string path)
     {
-        using var connection = db.Open();
+        using var connection = db.OpenScript();
         using var command = connection.CreateCommand();
         command.CommandText = """
             UPDATE Scripts

@@ -40,6 +40,11 @@ public class MenuPage : BasePage
                 StateHasChanged = true;
 		        return PageEnum.SCRIPTS;
 	        }
+            else if(menuSelection == 1)
+            {
+                StateHasChanged = true;
+                return PageEnum.NOTES;
+            }
             StateHasChanged = false;
             return PageEnum.MENU;
         }
